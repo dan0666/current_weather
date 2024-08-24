@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time and Weather</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;600&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'SF Pro Display', sans-serif;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0); 
+        }
+
+        #timeWeather {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ffffff;
+            font-size: 18px;
+            background: linear-gradient(135deg, #333, #1a1a1a); 
+            padding: 12px 20px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4); 
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            cursor: move;
+            display: none;
+        }
+
+        #timeWeather img {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px; 
+            background-color: rgba(255, 255, 255, 0.1); 
+            padding: 5px;
+        }
+
+        #timeWeather .info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        #timeWeather .info #timeText {
+            font-family: 'SF Pro Display', sans-serif;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            font-size: 18px;
+        }
+        #timeWeather .info #weatherText {
+            font-family: 'SF Pro Display', sans-serif;
+            color: #c0c0c0;
+            font-weight: 400;
+            margin-top: 2px;
+            font-size: 16px;
+        }
+
+        #timeWeather {
+            -webkit-user-select: none; 
+            -moz-user-select: none; 
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+
+        #timeWeather:hover {
+            box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5);
+            transform: translateX(-50%) scale(1.03);
+        }
+    </style>
+</head>
+<body>
+    <div id="timeWeather">
+        <img id="weatherIcon" src="" alt="Weather Icon" />
+        <div class="info">
+            <span id="timeText">Loading...</span>
+            <span id="weatherText">Loading...</span>
+        </div>
+    </div>
+
+    <script>
+       let isDragging = false;
+let startX, startY, initialX, initialY;
+
+const timeWeather = document.getElementById('timeWeather');
+
+timeWeather.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    initialX = timeWeather.offsetLeft;
+    initialY = timeWeather.offsetTop;
+    timeWeather.style.transition = 'none';
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        timeWeather.style.left = `${Math.max(0, Math.min(window.innerWidth - timeWeather.offsetWidth, initialX + dx))}px`;
+        timeWeather.style.top = `${Math.max(0, Math.min(window.innerHeight - timeWeather.offsetHeight, initialY + dy))}px`;
+    }
+});
+
+document.addEventListener('mouseup', async () => {
+    if (isDragging) {
+        isDragging = false;
+        timeWeather.style.transition = '0.3s ease';
+
+        try {
+            await fetch(`https://${GetParentResourceName()}/removeFocus`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ type: 'removeFocus' })
+            });
+        } catch (error) {
+            console.error('Error removing focus:', error);
+        }
+    }
+});
+
+window.addEventListener('message', function(event) {
+    if (event.data.type === "toggleVisibility") {
+        timeWeather.style.display = event.data.visible ? 'flex' : 'none';
+    }
+    if (event.data.type === "updateTimeWeather") {
+        document.getElementById('timeText').innerText = event.data.time;
+        document.getElementById('weatherIcon').src = `icons/${event.data.weatherIcon}`;
+        document.getElementById('weatherText').innerText = event.data.weatherName;
+    }
+});
+
+    </script>
+</body>
+</html>
